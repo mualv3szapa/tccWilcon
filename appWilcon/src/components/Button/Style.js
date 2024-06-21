@@ -7,7 +7,7 @@ export const BtnView = styled.TouchableOpacity`
   align-items: center;
   justify-content: center;
   border-radius: 20px;
-  margin-top: 200px;
+  /* margin-top: 200px; */
 
   ${(props) =>
     props.clickButton
