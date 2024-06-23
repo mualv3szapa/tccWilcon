@@ -3,18 +3,49 @@ import { StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
 import { Container } from "./src/components/Container/Container";
 import { ButtonONOFF } from "./src/components/Button/Button";
 import { useState } from "react";
+import axios from "axios"; // Adiciona a biblioteca axios para fazer requisições HTTP
+
+const ip = "172.20.10.10";
 
 export default function App() {
   const [status, setStatus] = useState("aberto");
   const [automaticStatus, setAutomaticStatus] = useState(false);
   const [appMode, setAppMode] = useState(false);
 
-  const toggleSwitch = () =>
+  const toggleSwitch = async () => {
     setAutomaticStatus((previousState) => !previousState);
+    try {
+      // Envia a requisição HTTP para o ESP32 para alternar o modo automático
+      const response = await axios.get(`http://${ip}/toggle-automatic`, {
+        params: {
+          automatic: !automaticStatus,
+        },
+      });
+      console.log("Resposta do ESP32:", response.data);
 
-  function toggleStatus() {
-    setStatus((prevStatus) => (prevStatus === "aberto" ? "fechado" : "aberto"));
-  }
+    } catch (error) {
+      console.error("Erro ao alternar o modo automático:", error);
+    }
+  };
+
+  const toggleStatus = async () => {
+    const newStatus = status === "aberto" ? "fechado" : "aberto";
+    setStatus(newStatus);
+    try {
+      // Envia a requisição HTTP para o ESP32 para controlar o servo
+      const response = await axios.get(`http://${ip}/control-servo`, {
+        params: {
+          status: newStatus === "aberto" ? "abrir" : "fechar",
+        },
+      });
+      console.log("Resposta do ESP32:", response.data);
+
+      
+    } catch (error) {
+      console.error("Erro ao controlar o servo:", error);
+    }
+  };
+
   return (
     <Container>
       {appMode == false ? (
@@ -54,14 +85,20 @@ export default function App() {
 
           {/* Botão abrir e fechar telhas */}
 
-          <Text style={{ marginTop: 50, marginBottom: 10 }}>
-            Clique para {status == "aberto" ? "fechar" : "abrir"} telha
-          </Text>
-          <ButtonONOFF
-            TextBtn={status == "aberto" ? "Fechado" : "Aberto"}
-            clickButton={status === "fechado"}
-            onPress={toggleStatus}
-          />
+          {automaticStatus == true ? (
+            <></>
+          ) : (
+            <>
+              <Text style={{ marginTop: 50, marginBottom: 10 }}>
+                Clique para {status == "aberto" ? "fechar" : "abrir"} telha
+              </Text>
+              <ButtonONOFF
+                TextBtn={status == "aberto" ? "Fechado" : "Aberto"}
+                clickButton={status === "fechado"}
+                onPress={toggleStatus}
+              />
+            </>
+          )}
 
           {/* Botão ativar e desativar modo automatico */}
 
