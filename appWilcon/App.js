@@ -2,15 +2,17 @@ import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
 import { Container } from "./src/components/Container/Container";
 import { ButtonONOFF } from "./src/components/Button/Button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios"; // Adiciona a biblioteca axios para fazer requisições HTTP
 
-const ip = "172.20.10.10";
+const ip = "172.20.10.10"; // IP do ESP32
 
 export default function App() {
   const [status, setStatus] = useState("aberto");
   const [automaticStatus, setAutomaticStatus] = useState(false);
   const [appMode, setAppMode] = useState(false);
+  const [temperature, setTemperature] = useState(null); // Estado para temperatura
+  const [humidity, setHumidity] = useState(null); // Estado para umidade
 
   const toggleSwitch = async () => {
     setAutomaticStatus((previousState) => !previousState);
@@ -22,7 +24,6 @@ export default function App() {
         },
       });
       console.log("Resposta do ESP32:", response.data);
-
     } catch (error) {
       console.error("Erro ao alternar o modo automático:", error);
     }
@@ -39,12 +40,28 @@ export default function App() {
         },
       });
       console.log("Resposta do ESP32:", response.data);
-
-      
     } catch (error) {
       console.error("Erro ao controlar o servo:", error);
     }
   };
+
+  const fetchDHTData = async () => {
+    try {
+      // Envia a requisição HTTP para obter dados do DHT
+      const response = await axios.get(`http://${ip}/get-dht`);
+      const { temperatura, umidade } = response.data;
+      setTemperature(temperatura);
+      setHumidity(umidade);
+    } catch (error) {
+      console.error("Erro ao obter dados do DHT:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDHTData(); // Busca os dados do DHT quando o aplicativo é carregado
+    const interval = setInterval(fetchDHTData, 10000); // Atualiza os dados a cada 10 segundos
+    return () => clearInterval(interval); // Limpa o intervalo quando o componente é desmontado
+  }, []);
 
   return (
     <Container>
@@ -128,36 +145,24 @@ export default function App() {
             )}
           </View>
 
-          {/* temperatura atual */}
+          {/* Exibição de dados do DHT */}
           <Text
             style={{
               fontSize: 18,
               marginTop: 40,
             }}
           >
-            Temperatura Ambiente: 25°C
+            Temperatura Ambiente: {temperature !== null ? `${temperature}°C` : "Carregando..."}
           </Text>
-          {/* Clima atual */}
+
           <Text
             style={{
               fontSize: 18,
               marginTop: 20,
             }}
           >
-            Clima Atual: Nublado
+            Umidade do ar: {humidity !== null ? `${humidity}%` : "Carregando..."}
           </Text>
-
-          {/* Umidade do ar atual */}
-          <Text
-            style={{
-              fontSize: 18,
-              marginTop: 20,
-            }}
-          >
-            Umidade do ar: 20%
-          </Text>
-
-          <Text>Modo Aplicativo Ativado</Text>
 
           <TouchableOpacity
             onPress={() => setAppMode(false)}
