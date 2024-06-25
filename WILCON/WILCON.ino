@@ -2,8 +2,10 @@
 #include <WiFi.h>
 #include <ESP32Servo.h>
 #include <LiquidCrystal_I2C.h>
-#include <SimpleDHT.h>
-#include <ArduinoJson.h> // Inclui a biblioteca ArduinoJson para criação do JSON
+#include <ArduinoJson.h> 
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+#include <DHT.h>
 
 // Configurações WiFi
 const char* ssid = "iPhone de Wilcon";
@@ -15,18 +17,28 @@ AsyncWebServer server(80);
 // Inicialização de componentes
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 Servo meuservo;
-SimpleDHT11 dht11; // Para DHT11. Use SimpleDHT22 para DHT22
-const int DHT_PIN = 4;
-#define pinSensorD 23
+
+#define DHTPIN 4 // Pino para o sensor DHT11
+#define DHTTYPE DHT11 // Tipo do sensor DHT
+
+#define btnPress 19 //pino do botão
+
+
+DHT dht(DHTPIN, DHTTYPE); // Inicialização do objeto DHT
+
+#define pinSensorD 23 // Pino para outro sensor digital
 
 // Variável para armazenar o estado do modo automático
 bool modoAutomatico = false;
 
 // Variáveis para armazenar os valores de temperatura e umidade
-byte temperatura = 0;
-byte umidade = 0;
+float temperatura = 0;
+float umidade = 0;
 
-// Função para controle manual do servo
+// Configuração do cliente NTP
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, 60000); 
+
 void controleServo(String status) {
   if (status == "abrir") {
     meuservo.write(170);
@@ -67,15 +79,19 @@ void setup() {
   meuservo.attach(26);
   meuservo.write(0);
 
+  // Inicialização do sensor DHT
+  dht.begin();
+
   // Configuração dos pinos
   pinMode(pinSensorD, INPUT);
-  pinMode(18, INPUT); // Fim de curso
+  pinMode(18, INPUT); 
+  pinMode(btnPress, INPUT);
 
   // Rota para controle do servo
   server.on("/control-servo", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (request->hasParam("status")) {
       String status = request->getParam("status")->value();
-      controleServo(status); // Chama a função de controle manual
+      controleServo(status);
     }
     request->send(200, "text/plain", "Comando recebido");
   });
@@ -85,10 +101,10 @@ void setup() {
     if (request->hasParam("automatic")) {
       String automatic = request->getParam("automatic")->value();
       if (automatic == "true") {
-        modoAutomatico = true; // Ativa o modo automático
+        modoAutomatico = true;
         Serial.println("Modo automático ativado");
       } else {
-        modoAutomatico = false; // Desativa o modo automático
+        modoAutomatico = false;
         Serial.println("Modo automático desativado");
       }
     }
@@ -115,6 +131,9 @@ void setup() {
     Serial.println("Dados DHT11 solicitados via Web");
   });
 
+  // Inicialização do cliente NTP
+  timeClient.begin();
+
   // Inicialização do servidor
   server.begin();
   Serial.println("Servidor Web iniciado!");
@@ -122,39 +141,47 @@ void setup() {
 }
 
 void loop() {
-  byte data[40] = {0};
+  // Atualizar hora
+  timeClient.update();
 
   // Leitura dos dados do sensor DHT
-  int err = SimpleDHTErrSuccess;
-  if ((err = dht11.read(DHT_PIN, &temperatura, &umidade, data)) != SimpleDHTErrSuccess) {
-    Serial.print("Erro ao ler do sensor DHT11, código: ");
-    Serial.println(err);
-    delay(2000);
-    return;
-  }
-
-  // Atualização do LCD
+  umidade = dht.readHumidity();
+  temperatura = dht.readTemperature();
   lcd.setCursor(0, 0);
-  lcd.print("Temp: " + String(temperatura) + "C");
-  lcd.setCursor(11, 1);
-  lcd.println(&tempo, "%H:%M");
+  lcd.print("Gozada");
 
-  // Log das leituras
-  Serial.println("Temperatura: " + String(temperatura) + "°C");
-  Serial.println("Umidade: " + String(umidade) + "%");
+  // if (isnan(umidade) || isnan(temperatura)) {
+  //   Serial.println("Falha ao ler do sensor DHT!");
+  // } else {
+  //   // Atualização do LCD
+  //   lcd.setCursor(0, 0);
+  //   lcd.print("Temp: " + String(temperatura) + "C");
+  //   lcd.setCursor(0, 1);
+  //   lcd.print("Hora: " + timeClient.getFormattedTime());
+
+  //   // Log das leituras
+  //   Serial.println("Temperatura: " + String(temperatura) + "°C");
+  //   Serial.println("Umidade: " + String(umidade) + "%");
+  // }
 
   // Lógica para controle automático baseado nas leituras do DHT11
   if (modoAutomatico) {
-    if (digitalRead(pinSensorD) == LOW) {
-      // Se o pinSensorD estiver ativado, fecha as telhas
+    if (digitalRead(pinSensorD) == HIGH) {
       meuservo.write(0);
       Serial.println("Modo automático: Sensor ativado, fechando as telhas.");
     } else {
-      // Se o pinSensorD não estiver ativado, abre as telhas
       meuservo.write(170);
       Serial.println("Modo automático: Sensor desativado, abrindo as telhas.");
     }
   }
+
+  // if ( digitalRead(btnPress) == HIGH  ) {
+  //   meuservo.write(0);
+  //   Serial.println("ativou");
+  // } else{
+  //   meuservo.write(170);
+  //   Serial.println("desativou");
+  // }
 
   delay(2000);
 }

@@ -107,7 +107,7 @@ export default function App() {
           ) : (
             <>
               <Text style={{ marginTop: 50, marginBottom: 10 }}>
-                Clique para {status == "aberto" ? "fechar" : "abrir"} telha
+                Clique para {status == "aberto" ? "abrir" : "fechar"} telha
               </Text>
               <ButtonONOFF
                 TextBtn={status == "aberto" ? "Fechado" : "Aberto"}
