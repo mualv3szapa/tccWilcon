@@ -23,7 +23,6 @@ Servo meuservo;
 
 #define btnPress 19 //pino do botão
 
-
 DHT dht(DHTPIN, DHTTYPE); // Inicialização do objeto DHT
 
 #define pinSensorD 23 // Pino para outro sensor digital
@@ -37,7 +36,7 @@ float umidade = 0;
 
 // Configuração do cliente NTP
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, 60000); 
+NTPClient timeClient(ntpUDP, "pool.ntp.org", -10800, 60000); // Ajuste de fuso horário para GMT-3
 
 void controleServo(String status) {
   if (status == "abrir") {
@@ -147,22 +146,21 @@ void loop() {
   // Leitura dos dados do sensor DHT
   umidade = dht.readHumidity();
   temperatura = dht.readTemperature();
-  lcd.setCursor(0, 0);
-  lcd.print("Gozada");
+  
 
-  // if (isnan(umidade) || isnan(temperatura)) {
-  //   Serial.println("Falha ao ler do sensor DHT!");
-  // } else {
-  //   // Atualização do LCD
-  //   lcd.setCursor(0, 0);
-  //   lcd.print("Temp: " + String(temperatura) + "C");
-  //   lcd.setCursor(0, 1);
-  //   lcd.print("Hora: " + timeClient.getFormattedTime());
+  if (isnan(umidade) || isnan(temperatura)) {
+    Serial.println("Falha ao ler do sensor DHT!");
+  } else {
+    // Atualização do LCD
+    lcd.setCursor(0, 0);
+    lcd.print("Temp: " + String(temperatura) + "C");
+    lcd.setCursor(0, 1);
+    lcd.print("Hora: " + timeClient.getFormattedTime());
 
-  //   // Log das leituras
-  //   Serial.println("Temperatura: " + String(temperatura) + "°C");
-  //   Serial.println("Umidade: " + String(umidade) + "%");
-  // }
+    // Log das leituras
+    Serial.println("Temperatura: " + String(temperatura) + "°C");
+    Serial.println("Umidade: " + String(umidade) + "%");
+  }
 
   // Lógica para controle automático baseado nas leituras do DHT11
   if (modoAutomatico) {
@@ -174,14 +172,6 @@ void loop() {
       Serial.println("Modo automático: Sensor desativado, abrindo as telhas.");
     }
   }
-
-  // if ( digitalRead(btnPress) == HIGH  ) {
-  //   meuservo.write(0);
-  //   Serial.println("ativou");
-  // } else{
-  //   meuservo.write(170);
-  //   Serial.println("desativou");
-  // }
 
   delay(2000);
 }

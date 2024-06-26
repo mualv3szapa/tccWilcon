@@ -9,8 +9,8 @@ const ip = "172.20.10.10"; // IP do ESP32
 
 export default function App() {
   const [status, setStatus] = useState("aberto");
-  const [automaticStatus, setAutomaticStatus] = useState(false);
-  const [appMode, setAppMode] = useState(false);
+  const [automaticStatus, setAutomaticStatus] = useState(true);
+  // const [appMode, setAppMode] = useState(false);
   const [temperature, setTemperature] = useState(null); // Estado para temperatura
   const [humidity, setHumidity] = useState(null); // Estado para umidade
 
@@ -65,115 +65,101 @@ export default function App() {
 
   return (
     <Container>
-      {appMode == false ? (
-        <Text style={{ marginTop: 300 }}>
-          {" "}
-          Modo aplicativo desativado{" "}
-          <TouchableOpacity onPress={() => setAppMode(true)}>
-            <Text style={{ color: "blue", textDecorationLine: "underline" }}>
-              Clique Aqui
-            </Text>
-          </TouchableOpacity>{" "}
-          para ativar
+      <View
+        style={{
+          marginTop: 90,
+          width: "90%",
+          borderRadius: 100,
+          height: 100,
+          backgroundColor: "#589ae8",
+          color: "#ffffff",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Text
+          style={{
+            textTransform: "uppercase",
+            fontSize: 25,
+          }}
+        >
+          Autotelha
         </Text>
+      </View>
+
+      {/* Botão abrir e fechar telhas */}
+
+      {automaticStatus == true ? (
+        <></>
       ) : (
         <>
-          <View
-            style={{
-              marginTop: 90,
-              width: "90%",
-              borderRadius: 100,
-              height: 100,
-              backgroundColor: "#589ae8",
-              color: "#ffffff",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text
-              style={{
-                textTransform: "uppercase",
-                fontSize: 25,
-              }}
-            >
-              Autotelha
-            </Text>
-          </View>
-
-          {/* Botão abrir e fechar telhas */}
-
-          {automaticStatus == true ? (
-            <></>
-          ) : (
-            <>
-              <Text style={{ marginTop: 50, marginBottom: 10 }}>
-                Clique para {status == "aberto" ? "abrir" : "fechar"} telha
-              </Text>
-              <ButtonONOFF
-                TextBtn={status == "aberto" ? "Fechado" : "Aberto"}
-                clickButton={status === "fechado"}
-                onPress={toggleStatus}
-              />
-            </>
-          )}
-
-          {/* Botão ativar e desativar modo automatico */}
-
-          <View
-            style={{
-              flexDirection: "row",
-              width: 90,
-              justifyContent: "space-between",
-              marginTop: 20,
-            }}
-          >
-            {automaticStatus == false ? (
-              <Text> Modo Automatico desativado </Text>
-            ) : (
-              <></>
-            )}
-            <Switch
-              trackColor={{ false: "#767577", true: "#589ae8" }}
-              thumbColor={automaticStatus ? "#4858E8" : "#f4f3f4"}
-              onValueChange={toggleSwitch}
-              value={automaticStatus}
-            />
-            {automaticStatus == true ? (
-              <Text> Modo Automatico Ativado</Text>
-            ) : (
-              <></>
-            )}
-          </View>
-
-          {/* Exibição de dados do DHT */}
-          <Text
-            style={{
-              fontSize: 18,
-              marginTop: 40,
-            }}
-          >
-            Temperatura Ambiente: {temperature !== null ? `${temperature}°C` : "Carregando..."}
+          <Text style={{ marginTop: 50, marginBottom: 10 }}>
+            Clique para {status == "aberto" ? "abrir" : "fechar"} telha
           </Text>
-
-          <Text
-            style={{
-              fontSize: 18,
-              marginTop: 20,
-            }}
-          >
-            Umidade do ar: {humidity !== null ? `${humidity}%` : "Carregando..."}
-          </Text>
-
-          <TouchableOpacity
-            onPress={() => setAppMode(false)}
-            style={{ marginTop: 30 }}
-          >
-            <Text style={{ color: "blue", textDecorationLine: "underline" }}>
-              Desativar modo aplicativo
-            </Text>
-          </TouchableOpacity>
+          <ButtonONOFF
+            TextBtn={status == "aberto" ? "Fechado" : "Aberto"}
+            clickButton={status === "fechado"}
+            onPress={toggleStatus}
+          />
         </>
       )}
+
+      {/* Botão ativar e desativar modo automatico */}
+
+      <View
+        style={{
+          flexDirection: "row",
+          width: 90,
+          justifyContent: "space-between",
+          marginTop: 20,
+        }}
+      >
+        {automaticStatus == false ? (
+          <Text> Modo Automatico desativado </Text>
+        ) : (
+          <></>
+        )}
+        <Switch
+          trackColor={{ false: "#767577", true: "#589ae8" }}
+          thumbColor={automaticStatus ? "#4858E8" : "#f4f3f4"}
+          onValueChange={toggleSwitch}
+          value={automaticStatus}
+        />
+        {automaticStatus == true ? (
+          <Text> Modo Automatico Ativado</Text>
+        ) : (
+          <></>
+        )}
+      </View>
+
+      {/* Exibição de dados do DHT */}
+      <Text
+        style={{
+          fontSize: 18,
+          marginTop: 40,
+        }}
+      >
+        Temperatura Ambiente:{" "}
+        {temperature !== null ? `${temperature}°C` : "Carregando..."}
+      </Text>
+
+      <Text
+        style={{
+          fontSize: 18,
+          marginTop: 20,
+        }}
+      >
+        Umidade do ar: {humidity !== null ? `${humidity}%` : "Carregando..."}
+      </Text>
+
+      {/* <TouchableOpacity
+        onPress={() => setAppMode(false)}
+        style={{ marginTop: 30 }}
+      >
+        <Text style={{ color: "blue", textDecorationLine: "underline" }}>
+          Desativar modo aplicativo
+        </Text>
+      </TouchableOpacity> */}
     </Container>
   );
 }
